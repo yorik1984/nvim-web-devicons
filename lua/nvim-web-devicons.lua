@@ -482,6 +482,11 @@ local icons = {
     color = "#f0772b",
     name = "Hbs",
   };
+  ["heex"] = {
+    icon = "",
+    color = "#a074c4",
+    name = "Heex",
+  };
   ["hh"] = {
     icon = "",
     color = "#a074c4",
@@ -987,6 +992,11 @@ local icons = {
     color = "#e4b854",
     name = "Prolog"
   };
+  ["zig"] = {
+    icon = '',
+    color = '#f69a1b',
+    name = 'Zig',
+  };
 }
 
 local default_icon = {
@@ -1049,39 +1059,51 @@ local function setup(opts)
 end
 
 local function get_icon(name, ext, opts)
+  ext = ext or name:match("^.*%.(.*)$") or ""
   if not loaded then
     setup()
   end
 
-  local icon_data = icons[name]
-  local by_name = icon_data and icon_data.icon or nil
+  local has_default = (opts and opts.default) or global_opts.default
+  local icon_data = icons[name] or icons[ext] or (has_default and default_icon)
 
-  if by_name then
-    return by_name, get_highlight_name(icon_data)
-  else
-    icon_data = icons[ext]
+  if icon_data then
+    return icon_data.icon, get_highlight_name(icon_data)
+  end
+end
 
-    if not icon_data and ((opts and opts.default) or global_opts.default) then
-      icon_data = default_icon
-    end
+local function get_icon_color(name, ext, opts)
+  ext = ext or name:match("^.*%.(.*)$") or ""
+  if not loaded then
+    setup()
+  end
 
-    if icon_data then
-      local by_ext = icon_data.icon
-      return by_ext, get_highlight_name(icon_data)
-    end
+  local has_default = (opts and opts.default) or global_opts.default
+  local icon_data = icons[name] or icons[ext] or (has_default and default_icon)
+
+  if icon_data then
+    return icon_data.icon, icon_data.color
   end
 end
 
 local function set_icon(user_icons)
-  icons = vim.tbl_extend("force", icons, user_icons)
+  icons = vim.tbl_extend("force", icons, user_icons or {})
   for _, icon_data in pairs(user_icons) do
     set_up_highlight(icon_data)
   end
 end
 
+local function set_default_icon(icon, color)
+  default_icon.icon = icon
+  default_icon.color = color
+  set_up_highlight(default_icon)
+end
+
 return {
   get_icon = get_icon,
+  get_icon_color = get_icon_color,
   set_icon = set_icon,
+  set_default_icon = set_default_icon,
   setup = setup,
   has_loaded = function() return loaded end,
   get_icons = function() return icons end,
